@@ -34,16 +34,18 @@ services:
         reservations:
           cpus: '1.00'
           memory: 512M
+    networks:
+      - dockerized-app
 
   db:
     image: mysql
     container_name: laravel_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: watches_password
-      MYSQL_DATABASE: watches
-      MYSQL_USER: laravel_watches
-      MYSQL_PASSWORD: watches_password
+      MYSQL_ROOT_PASSWORD: p@$$w0rd
+      MYSQL_DATABASE: car_rental
+      MYSQL_USER: car_rental_app
+      MYSQL_PASSWORD: p@$$w0rd
     volumes:
       - mysql_data:/var/lib/mysql
     deploy: 
@@ -54,6 +56,8 @@ services:
         reservations:
           cpus: '0.50'
           memory: 256M
+    networks:
+      - dockerized-app
   
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -61,11 +65,13 @@ services:
     restart: unless-stopped
     environment:
       PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: watches_password
+      MYSQL_ROOT_PASSWORD: p@$$w0rd
     ports:
       - "9001:80"
     depends_on:
       - db
+    networks:
+      - dockerized-app
 
   nginx:
     image: nginx:latest
@@ -77,6 +83,12 @@ services:
       - "80:80"
     depends_on:
       - php
+    networks:
+      - dockerized-app
 
 volumes:
   mysql_data:
+
+networks:
+  dockerized-app:
+    driver: bridge

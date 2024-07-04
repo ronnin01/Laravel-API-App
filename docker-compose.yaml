@@ -1,0 +1,82 @@
+version: '3'
+
+# Include some docker-compose
+# include:
+#   - redis-compose.yml
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "9000:9000"
+    develop:
+      watch:
+        - path: .
+          action: sync
+          target: /var/www/html
+          ignore:
+            - ./vendor/
+    deploy:
+      placement:
+        constraints:
+          - disktype=ssd
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 1024M
+          pids: 100
+        reservations:
+          cpus: '1.00'
+          memory: 512M
+
+  db:
+    image: mysql
+    container_name: laravel_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: watches_password
+      MYSQL_DATABASE: watches
+      MYSQL_USER: laravel_watches
+      MYSQL_PASSWORD: watches_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    deploy: 
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 512M
+        reservations:
+          cpus: '0.50'
+          memory: 256M
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: laravel_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: watches_password
+    ports:
+      - "9001:80"
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:latest
+    container_name: laravel_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+
+volumes:
+  mysql_data:
